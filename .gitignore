@@ -8,5 +8,4 @@
 /src/.preload.php
 /var/
 /vendor/
-/.idea/
 ###< symfony/framework-bundle ###
