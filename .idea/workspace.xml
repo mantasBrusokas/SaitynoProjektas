@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="bd874335-923f-4494-9319-fcbf594ab5f6" name="Default Changelist" comment="" />
+    <list default="true" id="bd874335-923f-4494-9319-fcbf594ab5f6" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -10,6 +13,9 @@
   <component name="ComposerSettings" doNotAsk="true" synchronizationState="SYNCHRONIZE">
     <pharConfigPath>$PROJECT_DIR$/composer.json</pharConfigPath>
     <execution />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="PhpWorkspaceProjectConfiguration">
     <include_path>
@@ -72,6 +78,7 @@
     </include_path>
   </component>
   <component name="ProjectId" id="1i3vTbF7QCIwd8xy0VoXzUOdjAh" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -102,6 +109,8 @@
       <workItem from="1601151114071" duration="5844000" />
       <workItem from="1601476165043" duration="182000" />
       <workItem from="1601658066587" duration="1895000" />
+      <workItem from="1601660377203" duration="789000" />
+      <workItem from="1601837564290" duration="546000" />
     </task>
     <servers />
   </component>
@@ -125,6 +134,14 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="740" y="275" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1601151461472" />
+    <state x="822" y="418" key="Github.ShareDialog" timestamp="1601660429886">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="822" y="418" key="Github.ShareDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1601660429886" />
+    <state x="740" y="225" key="Github.UntrackedFilesDialog" timestamp="1601660441869">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="740" y="225" key="Github.UntrackedFilesDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1601660441869" />
     <state x="461" y="165" key="SettingsEditor" timestamp="1601658356056">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
