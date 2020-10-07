@@ -55,7 +55,7 @@ class ProductController extends AbstractController
             $response->setData(
                 [
                     'status' => '404',
-                    'errors' => 'Posts not found',
+                    'errors' => 'Product not found',
                 ]
             );
             $response->setStatusCode(404);
