@@ -83,14 +83,14 @@ class ReviewController extends AbstractController
      * @param Request $request
      * @param EntityManagerInterface $entityManager
      * @param ProductRepository $productRepository
-     * @param int $userId
-     * @param int $productId
+     * @param  $userId
+     * @param  $productId
      * @return JsonResponse
      * @throws \Exception
      * @Route("/users/{userId}/products/{productId}/reviews", name="reviews_add", methods={"POST"})
      */
     public function addReview(Request $request, EntityManagerInterface $entityManager,
-                              ProductRepository $productRepository, int $userId, int $productId)
+                              ProductRepository $productRepository, $userId, $productId)
     {
 
         try {
@@ -144,19 +144,29 @@ class ReviewController extends AbstractController
     /**
      * @param ReviewRepository $reviewRepository
      * @param ProductRepository $productRepository
-     * @param int $reviewId
-     * @param int $userId
-     * @param int $productId
+     * @param  $reviewId
+     * @param  $userId
+     * @param  $productId
      * @return JsonResponse
      * @Route("/users/{userId}/products/{productId}/reviews/{reviewId}", name="reviews_get", methods={"GET"})
      */
     public function getReview(ReviewRepository $reviewRepository, ProductRepository $productRepository,
-                              int $reviewId, int $userId, int $productId)
+                              $reviewId, $userId, $productId)
     {
         $product = $productRepository->findOneBy(['id' => $productId]);
+        $response = new JsonResponse();
         if (!empty($product)) {
             if ($product->getUser()->getId() == $userId) {
                 $review = $reviewRepository->find($reviewId);
+                $response->setData(
+                    [
+                        'id' => $review->getId(),
+                        'name' => $review->getTitle(),
+                        'description' => $review->getContent(),
+                        'price' => $review->getCreateDate(),
+                    ]
+                );
+                $response->setStatusCode(200);
             } else {
                 $data = [
                     'status' => 404,
@@ -179,7 +189,7 @@ class ReviewController extends AbstractController
             ];
             return $this->response($data, 404);
         }
-        return $this->response($review);
+        return $response;
     }
 
     /**
@@ -206,7 +216,7 @@ class ReviewController extends AbstractController
                 ];
                 return $this->response($data, 404);
             } else {
-                $products = $user->getProducts()();
+                $products = $user->getProducts();
                 if (!empty($products)) {
                     foreach ($products as $product) {
                         if ($product->getId() == $productId) {
@@ -222,6 +232,7 @@ class ReviewController extends AbstractController
                                         }
                                         $review->setTitle($request->get('title'));
                                         $review->setContent($request->get('content'));
+                                        $review->setCreateDate(new \DateTime($request->get('create_date')));
                                         $entityManager->persist($review);
                                         $entityManager->flush();
 
