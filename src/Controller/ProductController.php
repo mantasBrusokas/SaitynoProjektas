@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Product;
 use App\Repository\ProductRepository;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,24 +19,62 @@ use Symfony\Component\Routing\Annotation\Route;
 class ProductController extends AbstractController
 {
     /**
-     * @param ProductRepository $productRepository
+     * @param int $userId
+     * @param UserRepository $userRepository
      * @return JsonResponse
-     * @Route("/products", name="products", methods={"GET"})
+     * @Route("/users/{userId}/products", name="products", methods={"GET"})
      */
-    public function getProducts(ProductRepository $productRepository){
-        $data = $productRepository->findAll();
-        return $this->response($data);
+    public function getProducts(int $userId, UserRepository $userRepository){
+
+        $response = new JsonResponse();
+        $user = $userRepository->findOneBy(['id' => $userId]);
+        $products = [];
+        if (!empty($user)) {
+            $products = $user->getProducts();
+        } else {
+            $response->setData(
+                [
+                    'status' => '404',
+                    'errors' => 'User not found',
+                ]
+            );
+            $response->setStatusCode(404);
+        }
+        $data = [];
+        foreach ($products as $product) {
+
+            $data[] =
+                [
+                    'id' => $product->getId(),
+                    'name' => $product->getName(),
+                    'description' => $product->getDescription(),
+                    'price' => $product->getPrice(),
+                ];
+        }
+        if (empty($data)) {
+            $response->setData(
+                [
+                    'status' => '404',
+                    'errors' => 'Posts not found',
+                ]
+            );
+            $response->setStatusCode(404);
+        }
+
+        return $response->setData($data);
     }
 
     /**
      * @param Request $request
      * @param EntityManagerInterface $entityManager
-     * @param ProductRepository $productRepository
+     * @param UserRepository $userRepository
+     * @param int $userId
      * @return JsonResponse
      * @throws \Exception
-     * @Route("/products", name="products_add", methods={"POST"})
+     * @Route("/users/{userId}/products", name="products_add", methods={"POST"})
      */
-    public function addProduct(Request $request, EntityManagerInterface $entityManager, ProductRepository $productRepository){
+    public function addProduct(Request $request, EntityManagerInterface $entityManager, UserRepository $userRepository,
+                               int $userId){
 
         try{
             $request = $this->transformJsonBody($request);
@@ -44,19 +83,32 @@ class ProductController extends AbstractController
                 throw new \Exception();
             }
 
-            $product = new Product();
-            $product->setName($request->get('name'));
-            $product->setDescription($request->get('description'));
-            $product->setPrice($request->get('price'));
-            $product->setCreateDate(new \DateTime($request->get('create_date')));
-            $entityManager->persist($product);
-            $entityManager->flush();
+            $user = $userRepository->findOneBy(['id' => $userId]);
 
-            $data = [
-                'status' => 200,
-                'success' => "Product added successfully",
-            ];
-            return $this->response($data);
+            if (!empty($user)) {
+
+                $product = new Product();
+                $product->setUser($user);
+                $product->setName($request->get('name'));
+                $product->setDescription($request->get('description'));
+                $product->setPrice($request->get('price'));
+                $product->setCreateDate(new \DateTime($request->get('create_date')));
+                $entityManager->persist($product);
+                $entityManager->flush();
+
+                $data = [
+                    'status' => 200,
+                    'success' => "Product added successfully",
+                ];
+                return $this->response($data);
+
+            }else{
+                $data = [
+                    'status' => 404,
+                    'errors' => "User not found",
+                ];
+                return $this->response($data, 404);
+            }
 
         }catch (\Exception $e){
             $data = [
@@ -71,35 +123,57 @@ class ProductController extends AbstractController
 
     /**
      * @param ProductRepository $productRepository
-     * @param $id
+     * @param $productId
+     * @param int $userId
      * @return JsonResponse
-     * @Route("/products/{id}", name="products_get", methods={"GET"})
+     * @Route("/users/{userId}/products/{productId}", name="products_get", methods={"GET"})
      */
-    public function getProduct(ProductRepository $productRepository, $id){
-        $product = $productRepository->find($id);
-
-        if (!$product){
+    public function getProduct(ProductRepository $productRepository, int $productId, int $userId){
+        $product = $productRepository->find($productId);
+        $response = new JsonResponse();
+        if (!$product->getUser()){
             $data = [
                 'status' => 404,
                 'errors' => "Product not found",
             ];
             return $this->response($data, 404);
         }
-        return $this->response($product);
+        else{
+            if ($product->getUser()->getId() == $userId) {
+                $response->setData(
+                    [
+                        'id' => $product->getId(),
+                        'name' => $product->getName(),
+                        'description' => $product->getDescription(),
+                        'price' => $product->getPrice(),
+                    ]
+                );
+                $response->setStatusCode(200);
+            } else {
+                $data = [
+                    'status' => 404,
+                    'errors' => "User not found",
+                ];
+                return $this->response($data, 404);
+            }
+            return $response;
+        }
     }
 
     /**
      * @param Request $request
      * @param EntityManagerInterface $entityManager
      * @param ProductRepository $productRepository
-     * @param $id
+     * @param $productId
+     * @param int $userId
      * @return JsonResponse
-     * @Route("/products/{id}", name="products_put", methods={"PUT"})
+     * @Route("/users/{userId}/products/{productId}", name="products_put", methods={"PUT"})
      */
-    public function updateProduct(Request $request, EntityManagerInterface $entityManager, ProductRepository $productRepository, $id){
+    public function updateProduct(Request $request, EntityManagerInterface $entityManager, ProductRepository $productRepository, $productId,
+                                  int $userId){
 
         try{
-            $product = $productRepository->find($id);
+            $product = $productRepository->find($productId);
 
             if (!$product){
                 $data = [
@@ -114,17 +188,28 @@ class ProductController extends AbstractController
             if (!$request || !$request->get('name') || !$request->request->get('description')){
                 throw new \Exception();
             }
+            if ($product->getUser()->getId() == $userId) {
 
             $product->setName($request->get('name'));
             $product->setDescription($request->get('description'));
             $product->setPrice($request->get('price'));
+            $entityManager->persist($product);
             $entityManager->flush();
 
             $data = [
                 'status' => 200,
                 'errors' => "Product updated successfully",
             ];
-            return $this->response($data);
+                return $this->response($data);
+
+            }
+            else{
+                $data = [
+                    'status' => 404,
+                    'errors' => "Product not found",
+                ];
+                return $this->response($data, 404);
+            }
 
         }catch (\Exception $e){
             $data = [
@@ -139,12 +224,15 @@ class ProductController extends AbstractController
 
     /**
      * @param ProductRepository $productRepository
-     * @param $id
+     * @param EntityManagerInterface $entityManager
+     * @param $productId
+     * @param int $userId
      * @return JsonResponse
-     * @Route("/products/{id}", name="products_delete", methods={"DELETE"})
+     * @Route("/users/{userId}/products/{productId}", name="products_delete", methods={"DELETE"})
      */
-    public function deleteProduct(EntityManagerInterface $entityManager, ProductRepository $productRepository, $id){
-        $product = $productRepository->find($id);
+    public function deleteProduct(EntityManagerInterface $entityManager, ProductRepository $productRepository,
+                                  int $productId, int $userId){
+        $product = $productRepository->find($productId);
 
         if (!$product){
             $data = [
@@ -153,17 +241,25 @@ class ProductController extends AbstractController
             ];
             return $this->response($data, 404);
         }
+        if ($product->getUser()->getId() == $userId) {
 
-        $entityManager->remove($product);
-        $entityManager->flush();
-        $data = [
-            'status' => 200,
-            'errors' => "Product deleted successfully",
-        ];
-        return $this->response($data);
+            $entityManager->remove($product);
+            $entityManager->flush();
+            $data = [
+                'status' => 200,
+                'errors' => "Product deleted successfully",
+            ];
+            return $this->response($data);
+
+        }
+        else{
+            $data = [
+                'status' => 404,
+                'errors' => "User not found",
+            ];
+            return $this->response($data, 404);
+        }
     }
-
-
 
     /**
      * Returns a JSON response

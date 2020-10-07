@@ -37,6 +37,11 @@ class Product implements \JsonSerializable {
     private $price;
 
     /**
+     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="products")
+     */
+    private $user;
+
+    /**
      * @return mixed
      */
     public function getId()
@@ -139,5 +144,17 @@ class Product implements \JsonSerializable {
             "description" => $this->getDescription(),
             "create_date" => $this->getCreateDate(),
         ];
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
+
+        return $this;
     }
 }
