@@ -32,6 +32,11 @@ class Product implements \JsonSerializable {
     private $create_date;
 
     /**
+     * @ORM\Column(type="decimal")
+     */
+    private $price;
+
+    /**
      * @return mixed
      */
     public function getId()
@@ -74,6 +79,23 @@ class Product implements \JsonSerializable {
         $this->description = $description;
     }
 
+
+    /**
+     * @return mixed
+     */
+    public function getPrice()
+    {
+        return $this->price;
+    }
+    /**
+     * @param mixed $price
+     */
+    public function setPrice($price)
+    {
+        $this->price = $price;
+    }
+
+
     /**
      * @return mixed
      */
@@ -115,6 +137,7 @@ class Product implements \JsonSerializable {
         return [
             "name" => $this->getName(),
             "description" => $this->getDescription(),
+            "create_date" => $this->getCreateDate(),
         ];
     }
 }

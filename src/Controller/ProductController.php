@@ -47,7 +47,8 @@ class ProductController extends AbstractController
             $product = new Product();
             $product->setName($request->get('name'));
             $product->setDescription($request->get('description'));
-            $product->setCreateDate(new \DateTime($request->get('time')));
+            $product->setPrice($request->get('price'));
+            $product->setCreateDate(new \DateTime($request->get('create_date')));
             $entityManager->persist($product);
             $entityManager->flush();
 
@@ -116,6 +117,7 @@ class ProductController extends AbstractController
 
             $product->setName($request->get('name'));
             $product->setDescription($request->get('description'));
+            $product->setPrice($request->get('price'));
             $entityManager->flush();
 
             $data = [
@@ -160,8 +162,6 @@ class ProductController extends AbstractController
         ];
         return $this->response($data);
     }
-
-
 
 
 
