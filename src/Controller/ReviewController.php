@@ -113,7 +113,7 @@ class ReviewController extends AbstractController
                     $entityManager->flush();
 
                     $data = [
-                        'status' => 200,
+                        'status' => 201,
                         'success' => "Review added successfully",
                     ];
                     return $this->response($data);

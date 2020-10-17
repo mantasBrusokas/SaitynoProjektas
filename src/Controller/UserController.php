@@ -162,7 +162,7 @@ class UserController extends AbstractController
             $entityManager->flush();
 
             $data = [
-                'status' => 200,
+                'status' => 201,
                 'success' => "Register successfully",
             ];
             return $this->response($data);

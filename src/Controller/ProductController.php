@@ -97,10 +97,10 @@ class ProductController extends AbstractController
                 $entityManager->flush();
 
                 $data = [
-                    'status' => 200,
+                    'status' => 201,
                     'success' => "Product added successfully",
                 ];
-                return $this->response($data);
+                return $this->response($data, 201);
 
             }else{
                 $data = [
@@ -131,7 +131,8 @@ class ProductController extends AbstractController
     public function getProduct(ProductRepository $productRepository, int $productId, int $userId){
         $product = $productRepository->find($productId);
         $response = new JsonResponse();
-        if (!$product->getUser()){
+
+        if (!$product){
             $data = [
                 'status' => 404,
                 'errors' => "Product not found",
