@@ -12,13 +12,15 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use App\Response\UserResponse;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 
 /**
  * Class UserController
  * @package App\Controller
- * @Route("/api", name="product_api")
+ * @Route("/api", name="post_api")
  */
-class UserController extends AbstractController
+class UserController extends ApiController
 {
 
     /** @var UserRepository */
@@ -35,11 +37,24 @@ class UserController extends AbstractController
     }
 
     /**
+     * @var User $user
      * @Route("/users", name="get-users-list", methods={"GET"})
      */
     public function getUsersList()
     {
-        return new UserResponse($this->userRepository->findAll());
+        $response = new JsonResponse();
+        $user = $this->getUser();
+        if ($user->getRole() == 'ADMIN') {
+            return new UserResponse($this->userRepository->findAll());
+        }
+        $response->setData(
+            [
+                'status' => '403',
+                'errors' => 'Access denied',
+            ]
+        );
+        $response->setStatusCode(403);
+        return $response;
     }
 
     /**
@@ -63,7 +78,15 @@ class UserController extends AbstractController
                 ]
             );
             $response->setStatusCode(200);
+
         } else {
+
+            $response->setData(
+                [
+                    'status' => '404',
+                    'errors' => 'User not found',
+                ]
+            );
             $response->setStatusCode(404);
         }
         return $response;
@@ -91,6 +114,12 @@ class UserController extends AbstractController
             return $this->response($data);
 
         } else {
+            $response->setData(
+                [
+                    'status' => '404',
+                    'errors' => 'User not found',
+                ]
+            );
             $response->setStatusCode(404);
         }
         return $response;
@@ -107,12 +136,28 @@ class UserController extends AbstractController
         $response = new JsonResponse();
         $data = json_decode($request->getContent(), true);
         $user = $this->userRepository->findOneBy(['id' => $userId]);
+        if (empty($user)) {
+            $response->setData(
+                [
+                    'status' => '404',
+                    'errors' => 'User not found',
+                ]
+            );
+            $response->setStatusCode(404);
+
+            return $response;
+        }
 
         if (isset($data['email']) || isset($data['role'])) {
             $response->setStatusCode(200);
         } else {
+            $response->setData(
+                [
+                    'status' => '422',
+                    'errors' => 'Data not valid',
+                ]
+            );
             $response->setStatusCode(422);
-
             return $response;
         }
 
@@ -122,7 +167,6 @@ class UserController extends AbstractController
         if (isset($data['role'])) {
             $user->setRole($data['role']);
         }
-
         $this->entityManagerInterface->persist($user);
         $this->entityManagerInterface->flush();
         $data = [
@@ -132,15 +176,6 @@ class UserController extends AbstractController
         return $this->response($data);
     }
 
-
-    /**
-     * @param Request $request
-     * @param EntityManagerInterface $entityManager
-     * @param UserPasswordEncoderInterface $passwordEncoder
-     * @return JsonResponse
-     * @throws \Exception
-     * @Route("/users", name="app_register", methods={"POST"})
-     */
     public function register(Request $request, EntityManagerInterface $entityManager,
                              UserPasswordEncoderInterface $passwordEncoder): Response
     {
@@ -165,7 +200,7 @@ class UserController extends AbstractController
                 'status' => 201,
                 'success' => "Register successfully",
             ];
-            return $this->response($data);
+            return $this->response($data,201);
 
         } catch (\Exception $e) {
             $data = [
@@ -174,6 +209,16 @@ class UserController extends AbstractController
             ];
             return $this->response($data, 422);
         }
+    }
+
+    /**
+     * @param UserInterface $user
+     * @param JWTTokenManagerInterface $JWTManager
+     * @return JsonResponse
+     */
+    public function getTokenUser(UserInterface $user, JWTTokenManagerInterface $JWTManager)
+    {
+        return new JsonResponse(['token' => $JWTManager->create($user)]);
     }
 
     /**
