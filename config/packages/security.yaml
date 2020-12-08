@@ -15,6 +15,10 @@ security:
             pattern: ^/api/doc
             anonymous: true
             stateless: true
+        posts:
+            pattern: ^/api/products
+            anonymous: true
+            stateless: true
 
         login:
             pattern: ^/api/login
@@ -45,4 +49,5 @@ security:
         - { path: ^/register,  roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/doc,   roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/products, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api,       roles: IS_AUTHENTICATED_FULLY }

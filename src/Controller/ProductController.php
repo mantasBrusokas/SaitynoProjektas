@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Product;
 use App\Repository\ProductRepository;
 use App\Repository\UserRepository;
+use App\Response\ProductResponse;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +19,56 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class ProductController extends AbstractController
 {
+    /** @var ProductRepository */
+    private $productRespository;
+
+
+    public function __construct(
+        ProductRepository $productRespository
+    )
+    {
+        $this->productRespository = $productRespository;
+    }
+
+    /**
+     * @Route("/products/{productId}", name="get-product", methods={"GET"})
+     *
+     * @param int $productId
+     * @return JsonResponse
+     */
+    public function getOneProduct(int $productId)
+    {
+        $response = new JsonResponse();
+        $product = $this->productRespository->findOneBy(['id' => $productId]);
+
+        if (!empty($product)) {
+
+            $response->setData(
+                [
+                    'id' => $product->getId(),
+                    'name' => $product->getName(),
+                    'description' => $product->getDescription(),
+                ]
+            );
+            $response->setStatusCode(200);
+
+        } else {
+            $response->setData(
+                [
+                    'status' => '404',
+                    'errors' => 'Product not found',
+                ]
+            );
+            $response->setStatusCode(404);
+        }
+        return $response;
+    }
+
+    public function getProductsList()
+    {
+        return new ProductResponse($this->productRespository->findAll());
+    }
+
     /**
      * @param int $userId
      * @param UserRepository $userRepository

@@ -1,0 +1,688 @@
+{% extends 'base.html.twig' %}
+{% block title %}Bike Shop{% endblock %}
+{% block body %}
+    <head>
+        <!--====== Required meta tags ======-->
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <!--====== Bootstrap css ======-->
+        <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+        <!--====== Line Icons css ======-->
+        <link rel="stylesheet" href="assets/css/LineIcons.css">
+        <!--====== Magnific Popup css ======-->
+        <link rel="stylesheet" href="assets/css/magnific-popup.css">
+        <!--====== Slick css ======-->
+        <link rel="stylesheet" href="assets/css/slick.css">
+        <!--====== Animate css ======-->
+        <link rel="stylesheet" href="assets/css/animate.css">
+        <!--====== Default css ======-->
+        <link rel="stylesheet" href="assets/css/default.css">
+        <!--====== Style css ======-->
+        <link rel="stylesheet" href="assets/css/style.css">
+    </head>
+
+    <script>
+        var token = null;
+        $(document).ready(function () {
+            token = sessionStorage.getItem("token");
+            getPosts();
+            if (token == null) {
+                logout();
+                $('#logout').attr("style", "display:none");
+                $('.addNewPost').attr("style", "display:none");
+            } else {
+                $('#loginButton').attr("style", "display:none");
+                $('#register').attr("style", "display:none");
+                $('#logout').removeAttr("style");
+                $('#logout').attr("style", "-webkit-text-stroke: 1px #63037d; font-size:20px;font-weight: bold;");
+                getActiveUser();
+                getPosts();
+                checkPermissionUsers();
+            }
+        });
+        function checkPermissionUsers() {
+            if (sessionStorage.getItem("userRole") == 'CLIENT') {
+                $('.addNewPost').removeAttr("style");
+            } else {
+                $('.addNewPost').attr("style", "display:none");
+            }
+        }
+        function getActiveUser() {
+            var ajaxSendRequest = $.ajax({
+                url: 'api/activeUser',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                type: 'GET',
+                dataType: 'json',
+                async: false,
+            });
+            ajaxSendRequest.done(function (data) {
+                sessionStorage.setItem("userId", data.id);
+                sessionStorage.setItem("userRole", data.role);
+            }).fail(function (textStatus, errorThrown) {
+                checkToken(textStatus.responseJSON);
+            });
+        }
+        function addPost() {
+            var info = {
+                "name": $('#PostName').val(),
+                "description": $('#PostDescription').val(),
+            }
+            var ajaxSendRequest = $.ajax({
+                url: window.location.href + 'api/users/' + sessionStorage.getItem("userId") + '/posts',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                type: 'POST',
+                data: JSON.stringify(info),
+                dataType: 'json',
+                async: false,
+            });
+            ajaxSendRequest.done(function (data) {
+                $('#modalPostForm').modal('hide');
+                $(".modal-backdrop").remove();
+                getPosts();
+                alert('Sėkmingai įdėjote skelbimą');
+            }).fail(function (textStatus, errorThrown) {
+                checkToken(textStatus.responseJSON);
+                $('.bad-new-post').removeAttr("style");
+                $('.bad-new-post').attr("style", "color:red");
+            });
+        }
+        function register() {
+            if ($('#email-register').val() == ""
+                ||
+                $('#password-register').val() == ""
+                ||
+                $('#role-register').val() == ""
+            ) {
+                $('.bad-register').removeAttr("style");
+                $('.bad-register').attr("style", "color:red");
+                return;
+            }
+            var info = {
+                "email": $('#email-register').val(),
+                "password": $('#password-register').val(),
+                "role": $('#role-register').val(),
+            }
+            var ajaxSendRequest = $.ajax({
+                url: '{{ path('register') }}',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                type: 'POST',
+                data: JSON.stringify(info),
+                dataType: 'json',
+                async: false,
+            });
+            ajaxSendRequest.done(function (data) {
+                $('#modalRegisterForm').modal('hide');
+                $(".modal-backdrop").remove();
+                alert('Sveikiname sėkmingai prisiregistravus, dabar prisijunkite.');
+            }).fail(function (textStatus, errorThrown) {
+                checkToken(textStatus.responseJSON);
+                $('.bad-login').removeAttr("style");
+                $('.bad-login').attr("style", "color:red");
+            });
+        }
+        function getPosts() {
+            var ajaxSendRequest = $.ajax({
+                url: '{{ path('get_products') }}',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                type: 'GET',
+                dataType: 'json',
+                async: false,
+            });
+            ajaxSendRequest.done(function (data) {
+                var posts = "";
+                for (x in data) {
+                    posts += "<div class=\"col-lg-4 col-md-7 col-sm-9\">\n" +
+                        "                    <div class=\"pricing-style-one mt-40 wow fadeIn\" data-wow-duration=\"1.5s\" data-wow-delay=\"0.2s\">\n" +
+                        "                        <div class=\"pricing-icon text-center\">\n" +
+                        "                            <img src=\"assets/images/ShopItem.svg\" alt=\"\">\n" +
+                        "                        </div>\n" +
+                        "                        <div class=\"pricing-header text-center\">\n" +
+                        "                            <h5 class=\"sub-title\">" + data[x].name + "</h5>\n" +
+                        "                            <p class=\"month\"><span class=\"price\">" + data[x].description + "</span></p>\n" +
+                        "                        </div>\n";
+                    if (sessionStorage.getItem("userRole") == "ADMIN") {
+                        posts += "                        <div class=\"pricing-header text-center\">\n" +
+                            " <ul class=\"carousel-btn rounded-buttons\">\n" +
+                            "                                                <li ><a class=\"main-btn rounded-three register-to-visit\"\n" +
+                            "                                                       style=\"background: -webkit-linear-gradient(left, #63037d 0%, #e638f9 100%);\" onclick=getPost('" + data[x].id + "') data-toggle=\"modal\" data-target=\"#modalServiceForm\"\n" +
+                            "                                                       href=\"\">Redaguoti</a></li>\n" +
+                            "                                            </ul> </div>";
+                        posts += "               <div class=\"pricing-header text-center\" style=\"padding-top: 10px \">\n" +
+                            " <ul class=\"carousel-btn rounded-buttons\">\n" +
+                            "                                                <li ><a class=\"main-btn rounded-three register-to-visit\"\n" +
+                            "                                                       style=\"background: -webkit-linear-gradient(left, #ea0606 0%, #e70909 100%);\" onclick=deletePost('" + data[x].id + "') \n" +
+                            "                                                       href=\"\">Naikinti</a></li>\n" +
+                            "                                            </ul>";
+                    }
+                    posts += "                      </div>\n" +
+                        "                    </div>" +
+                        "                </div>";
+                }
+                if (sessionStorage.getItem("userRole") == "ADMIN") {
+                    posts += "<div class=\"col-lg-4 col-md-7 col-sm-9\">\n" +
+                        "                    <div class=\"pricing-style-one mt-40 wow fadeIn\" data-wow-duration=\"1.5s\" data-wow-delay=\"0.2s\">\n" +
+                        "                        <div class=\"pricing-icon text-center\">\n" +
+                        "                            <img src=\"assets/images/ShopItem.svg\" alt=\"\">\n" +
+                        "                        </div>\n" +
+                        "                        <div class=\"pricing-header text-center\">\n" +
+                        "                            <h5 class=\"sub-title\">Prekės pavadinimas</h5>\n" +
+                        "                            <p class=\"month\"><span class=\"price\">Aprašymas</span></p>\n" +
+                        "                        </div>\n" +
+                        "                        <div class=\"pricing-header text-center\">\n" +
+                        " <ul class=\"carousel-btn rounded-buttons\">\n" +
+                        "                                                <li ><a class=\"main-btn rounded-three register-to-visit\"\n" +
+                        "                                                       style=\"background: -webkit-linear-gradient(left, #63037d 0%, #e638f9 100%);\" data-toggle=\"modal\" onclick='removeError()' data-target=\"#modalPostForm\"\n" +
+                        "                                                       href=\"\">Pridėti naują</a></li>\n" +
+                        "                                            </ul>" +
+                        "                      </div>\n" +
+                        "                    </div>" +
+                        "                </div>";
+                }
+                $('.posts-information').html(posts);
+            }).fail(function (textStatus, errorThrown) {
+                checkToken(textStatus.responseJSON);
+            });
+        }
+        function login() {
+            if ($('#email').val() == "" || $('#password').val() == "") {
+                $('.bad-login').removeAttr("style");
+                $('.bad-login').attr("style", "color:red");
+                return;
+            }
+            var info = {
+                "email": $('#email').val(),
+                "password": $('#password').val(),
+            }
+            var ajaxSendRequest = $.ajax({
+                url: '{{ path('api_login_check') }}',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                type: 'POST',
+                data: JSON.stringify(info),
+                dataType: 'json',
+                async: false,
+            });
+            ajaxSendRequest.done(function (data) {
+                sessionStorage.setItem("token", data['token']);
+                token = data['token'];
+                $('#modalLoginForm').modal('hide');
+                $(".modal-backdrop").remove();
+                $('#loginButton').attr("style", "display:none");
+                $('#register').attr("style", "display:none");
+                $('#logout').removeAttr("style");
+                $('#logout').attr("style", "-webkit-text-stroke: 1px #63037d; font-size:20px;font-weight: bold;");
+                getActiveUser();
+                getPosts();
+                checkPermissionUsers();
+            }).fail(function (textStatus, errorThrown) {
+                $('.bad-login').removeAttr("style");
+                $('.bad-login').attr("style", "color:red");
+            });
+        }
+        function logout() {
+            sessionStorage.removeItem("token");
+            sessionStorage.removeItem("userRole");
+            sessionStorage.removeItem("userId");
+            $('#loginButton').removeAttr("style");
+            $('#register').removeAttr("style");
+            $('#logout').attr("style", "display:none");
+            $('.addNewPost').attr("style", "display:none");
+        }
+        var tempPostId = 0;
+        function editPost() {
+            if ($('#service-edit-title').val() == "" || $('#service-edit-price').val() == "") {
+                $('.bad-service-data-edit').removeAttr("style");
+                $('.bad-service-data-edit').attr("style", "color:red");
+                return;
+            }
+            var info = {
+                "name": $('#service-edit-title').val(),
+                "description": $('#service-edit-price').val()
+            }
+            var ajaxSendRequest = $.ajax({
+                url: window.location.href + 'api/posts/' + tempPostId,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                type: 'PUT',
+                data: JSON.stringify(info),
+                dataType: 'json',
+                async: false,
+            });
+            ajaxSendRequest.done(function (data) {
+                getPosts();
+                $('#modalServiceForm').modal('hide');
+                $(".modal-backdrop").remove();
+                $('.bad-service-data-edit').removeAttr("style");
+            }).fail(function (textStatus, errorThrown) {
+                checkToken(textStatus.responseJSON);
+            });
+        }
+        function getPost(postId) {
+            removeError();
+            tempPostId = postId;
+            var ajaxSendRequest = $.ajax({
+                url: window.location.href + 'api/posts/' + postId,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                type: 'GET',
+                dataType: 'json',
+                async: false,
+            });
+            ajaxSendRequest.done(function (data) {
+                $('#service-edit-title').val(data.name);
+                $('#service-edit-price').val(data.description);
+            }).fail(function (textStatus, errorThrown) {
+                checkToken(textStatus.responseJSON);
+            });
+        }
+        function deletePost(postId) {
+            removeError();
+            var ajaxSendRequest = $.ajax({
+                url: window.location.href + 'api/posts/' + postId,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                type: 'DELETE',
+                dataType: 'json',
+                async: false,
+            });
+            ajaxSendRequest.done(function (data) {
+                alert("Skelbimas buvo ištrintas");
+            }).fail(function (textStatus, errorThrown) {
+                checkToken(textStatus.responseJSON);
+            });
+        }
+        function checkToken(data) {
+            if (data.code == '401' && data.message == 'Expired JWT Token') {
+                sessionStorage.removeItem("token");
+                sessionStorage.removeItem("userId");
+                sessionStorage.removeItem("userRole");
+                location.reload();
+            }
+        }
+        function removeError() {
+            $('.error-info').removeAttr("style");
+            $('.error-info').attr("style", "display:none");
+            $('input').val("");
+        }
+        function removeJustError() {
+            $('.error-info').removeAttr("style");
+            $('.error-info').attr("style", "display:none");
+            $('input').val("");
+        }
+        function toggleMeniu() {
+            var found = false;
+            var classList = $('#navbarEight').attr('class').split(/\s+/);
+            $.each(classList, function (index, item) {
+                if (item === 'show') {
+                    found = true;
+                }
+            });
+            if (found) {
+                $('#navbarEight').removeClass('show');
+            } else {
+                $('#navbarEight').addClass('show');
+            }
+        }
+    </script>
+
+
+    <body>
+
+    <div class="modal fade" id="modalServiceForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header text-center">
+                    <h4 class="modal-title w-100 font-weight-bold">Redaguoti skelbimą</h4>
+                    <button type="button" id="login-modal-close" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body mx-3">
+                    <div class="md-form mb-1">
+                        <label data-error="wrong" data-success="right" for="defaultForm-email">Skelbimo
+                            pavadinimas</label>
+                        <br>
+                        <input type="text" id="service-edit-title" class="form-control ">
+                    </div>
+                    <div class="md-form mb-4">
+                        <label data-error="wrong" data-success="right" for="defaultForm-pass">Aprašymas</label>
+                        <br>
+                        <input type="text" id="service-edit-price" class="form-control ">
+                    </div>
+                    <div class="bad-service-data-edit error-info" style="display: none; color: red">
+                        Neužpildėte visų duomenų!!!
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-center">
+                    <button class="btn btn-success" onclick="editPost()">Išsaugoti</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="modalPostForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header text-center">
+                    <h4 class="modal-title w-100 font-weight-bold">Įdėti skelbimą</h4>
+                    <button type="button" id="login-modal-close" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body mx-3">
+                    <div class="md-form mb-1">
+                        <label data-error="wrong" data-success="right" for="defaultForm-email">Pavadinimas</label>
+                        <br>
+                        <input type="text" id="PostName" autocomplete="off" class="form-control ">
+                    </div>
+                    <div class="md-form mb-4">
+                        <label data-error="wrong" data-success="right" for="defaultForm-pass">Aprašymas</label>
+                        <br>
+                        <input type="text" id="PostDescription" autocomplete="off" class="form-control ">
+                    </div>
+                    <div class="bad-new-post error-info" style="display: none; color: red">
+                        Neužpildėte visų duomenų!!!
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-center">
+                    <button class="btn btn-success" onclick="addPost()">Įdėti skelbimą</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalRegisterForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true" style="margin-top: 150px">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header text-center">
+                    <h4 class="modal-title w-100 font-weight-bold">Registruotis</h4>
+                    <button type="button" id="login-modal-close" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body mx-3">
+                    <div class="md-form mb-1">
+                        <input type="email" id="email-register" autocomplete="off" class="form-control ">
+                        <label data-error="wrong" data-success="right" for="defaultForm-email">El. paštas</label>
+                    </div>
+                    <div class="md-form mb-4">
+                        <input type="password" id="password-register" autocomplete="off" class="form-control ">
+                        <label data-error="wrong" data-success="right" for="defaultForm-pass">Slaptažodis</label>
+                    </div>
+                    <div class="md-form mb-4">
+                        <input type="text" id="role-register" autocomplete="off" class="form-control ">
+                        <label data-error="wrong" data-success="right" for="defaultForm-pass">Rolė</label>
+                    </div>
+
+                    <div class="bad-register error-info" style="display: none; color: #ff0000">
+                        Blogi registracijos duomenys!!!
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-center">
+                    <button class="btn btn-success" onclick="register()">Registruotis</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalLoginForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true" style="margin-top: 150px">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header text-center">
+                    <h4 class="modal-title w-100 font-weight-bold">Prisijungti</h4>
+                    <button type="button" id="login-modal-close" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body mx-3">
+                    <div class="md-form mb-1">
+                        <input type="text" id="email" class="form-control ">
+                        <label data-error="wrong" data-success="right" for="defaultForm-email">El. paštas</label>
+                    </div>
+                    <div class="md-form mb-4">
+                        <input type="password" id="password" class="form-control ">
+                        <label data-error="wrong" data-success="right" for="defaultForm-pass">Slaptažodis</label>
+                    </div>
+                    <div class="bad-login error-info" style="display: none; color: red">
+                        Blogi prisijungimo duomenys!!!
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-center">
+                    <button class="btn btn-success" onclick="login()">Prisijungti</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--====== PRELOADER PART START ======-->
+    <div class="preloader">
+        <div class="loader">
+            <div class="ytp-spinner">
+                <div class="ytp-spinner-container"
+                     style="background: -webkit-linear-gradient(right, black 100%, white 100%);">
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--====== PRELOADER PART ENDS ======-->
+
+    <!--====== NAVBAR PART START ======-->
+
+    <section class="header-area">
+        <div class="navbar-area" style="background: -webkit-linear-gradient(left, #d4b52e 0%, #d417b8 100%);">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <nav class="navbar navbar-expand-lg">
+                            <a class="navbar-brand" href="#">
+                                <img src="assets/images/BikeShopLogo.png" alt="Logo">
+                            </a>
+                            <button class="navbar-toggler" type="button"
+                                    data-target="#navbarEight" aria-controls="navbarEight" aria-expanded="false"
+                                    onclick="toggleMeniu()"
+                                    aria-label="Toggle navigation">
+                                <span class="toggler-icon"></span>
+                                <span class="toggler-icon"></span>
+                                <span class="toggler-icon"></span>
+                            </button>
+
+                            <div class="collapse navbar-collapse sub-menu-bar" id="navbarEight">
+                                <ul class="navbar-nav ml-auto">
+                                    <li class="nav-item">
+                                        <a class="page-scroll"
+                                           style="-webkit-text-stroke: 1px #63037d; font-size:20px;font-weight: bold;"
+                                           href="#home">Pagrindinis</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="page-scroll"
+                                           style="-webkit-text-stroke: 1px #63037d; font-size:20px;font-weight: bold;"
+                                           href="#post">Dviračių nuoma</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="page-scroll"
+                                           style="-webkit-text-stroke: 1px #63037d; font-size:20px;font-weight: bold;"
+                                           href="#about">Kontaktai</a>
+                                    </li>
+                                    <li class="nav-item" id="loginButton">
+                                        <a href="" data-toggle="modal"
+                                           style="-webkit-text-stroke: 1px #63037d; font-size:20px;font-weight: bold;"
+                                           onclick="removeError()" data-target="#modalLoginForm">Prisijungti</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="page-scroll" id="logout"
+                                           style="-webkit-text-stroke: 1px #63037d; font-size:20px;font-weight: bold;"
+                                           onclick="logout()" href="">Atsijungti</a>
+                                    </li>
+                                    <li class="nav-item" id="register">
+                                        <a href="" data-toggle="modal"
+                                           style="-webkit-text-stroke: 1px #63037d; font-size:20px;font-weight: bold;"
+                                           onclick="removeError()" data-target="#modalRegisterForm">Registruotis</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </nav> <!-- navbar -->
+                    </div>
+                </div> <!-- row -->
+            </div> <!-- container -->
+        </div> <!-- navbar area -->
+
+        <div id="home" class="slider-area">
+            <div class="bd-example">
+                <div id="carouselOne" class="carousel slide" data-ride="carousel">
+                    <ol class="carousel-indicators">
+                        <li data-target="#carouselOne" data-slide-to="0" class="active"></li>
+                        <li data-target="#carouselOne" data-slide-to="1"></li>
+                    </ol>
+
+                    <div class="carousel-inner">
+                        <div class="carousel-item bg_cover active"
+                             style="background-image: url(assets/images/Main2.jpg)">
+                            <div class="carousel-caption">
+                                <div class="container">
+                                    <div class="row justify-content-center">
+                                        <div class="col-xl-6 col-lg-7 col-sm-10">
+                                            <h2 class="carousel-title">Greičiausias skelbimų portalas</h2>
+                                            <ul class="carousel-btn rounded-buttons">
+                                                <li class="addNewPost"><a
+                                                            class="main-btn rounded-three register-to-visit"
+                                                            style="background: -webkit-linear-gradient(left, #63037d 0%, #e638f9 100%);"
+                                                            data-toggle="modal" data-target="#modalPostForm"
+                                                            onclick="removeJustError()"
+                                                            href="">Įdėti skelbimą dabar</a></li>
+                                            </ul>
+                                        </div>
+                                    </div> <!-- row -->
+                                </div> <!-- container -->
+                            </div> <!-- carousel caption -->
+                        </div> <!-- carousel-item -->
+
+                        <div class="carousel-item bg_cover" style="background-image: url(assets/images/Slider_2.jpg)">
+                            <div class="carousel-caption">
+                                <div class="container">
+                                    <div class="row justify-content-center">
+                                        <div class="col-xl-6 col-lg-7 col-sm-10">
+                                            <h2 class="carousel-title">Nestovėk eilėse</h2>
+                                            <ul class="carousel-btn rounded-buttons">
+                                                <li class="addNewPost"><a
+                                                            class="main-btn rounded-three register-to-visit"
+                                                            style="background: -webkit-linear-gradient(left, #63037d 0%, #e638f9 100%);"
+                                                            data-toggle="modal" data-target="#modalPostForm"
+                                                            onclick="removeJustError()"
+                                                            href="">Įdėti skelbimą dabar</a></li>
+                                            </ul>
+                                        </div>
+                                    </div> <!-- row -->
+                                </div> <!-- container -->
+                            </div> <!-- carousel caption -->
+                        </div> <!-- carousel-item -->
+
+                        <a class="carousel-control-prev" href="#carouselOne" role="button" data-slide="prev">
+                            <i class="lni-arrow-left-circle"></i>
+                        </a>
+
+                        <a class="carousel-control-next" href="#carouselOne" role="button" data-slide="next">
+                            <i class="lni-arrow-right-circle"></i>
+                        </a>
+                    </div> <!-- carousel -->
+                </div> <!-- bd-example -->
+            </div>
+    </section>
+    <!--====== NAVBAR PART ENDS ======-->
+
+    <!--====== ABOUT PART START ======-->
+    <section id="post" class="about-area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-xl-6 col-lg-8">
+                    <div class="section-title text-center mt-30 pb-40">
+                        <h4 class="title wow fadeInUp" data-wow-duration="1.5s" data-wow-delay="0.6s">Skelbimai</h4>
+                        <p class="text wow fadeInUp" data-wow-duration="1.5s" data-wow-delay="1s">Patys naujausi
+                            skelbimai kiekvieną dieną</p>
+                    </div> <!-- section title -->
+                </div>
+            </div> <!-- row -->
+            <div class="posts-information row justify-content-center">
+
+            </div>
+        </div> <!-- container -->
+    </section>
+
+    <section id="about" class="pricing-area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-xl-6 col-lg-8">
+                    <div class="section-title text-center mt-30 pb-40">
+                        <h4 class="title wow fadeInUp" data-wow-duration="1.5s" data-wow-delay="0.6s">Kontaktai</h4>
+                        <p class="text wow fadeInUp" data-wow-duration="1.5s" data-wow-delay="1s">Mus galite rasti
+                            adresu: Naujoji gatvė 10</p>
+                        <p class="text wow fadeInUp" data-wow-duration="1.5s" data-wow-delay="1s">Telefonas:
+                            +3707777777777</p>
+                    </div> <!-- section title -->
+                </div>
+            </div> <!-- row -->
+
+        </div> <!-- container -->
+    </section>
+
+
+    <a href="#" class="back-to-top"><i class="lni-chevron-up"></i></a>
+    <!--====== jquery js ======-->
+    <script src="assets/js/vendor/modernizr-3.6.0.min.js"></script>
+    <script src="assets/js/vendor/jquery-1.12.4.min.js"></script>
+
+    <!--====== Bootstrap js ======-->
+    <script src="assets/js/bootstrap.min.js"></script>
+    <script src="assets/js/popper.min.js"></script>
+
+    <!--====== Slick js ======-->
+    <script src="assets/js/slick.min.js"></script>
+
+    <!--====== Isotope js ======-->
+    <script src="assets/js/isotope.pkgd.min.js"></script>
+
+    <!--====== Images Loaded js ======-->
+    <script src="assets/js/imagesloaded.pkgd.min.js"></script>
+
+    <!--====== Magnific Popup js ======-->
+    <script src="assets/js/jquery.magnific-popup.min.js"></script>
+
+    <!--====== Scrolling js ======-->
+    <script src="assets/js/scrolling-nav.js"></script>
+    <script src="assets/js/jquery.easing.min.js"></script>
+
+    <!--====== wow js ======-->
+    <script src="assets/js/wow.min.js"></script>
+
+    <!--====== Main js ======-->
+    <script src="assets/js/main.js"></script>
+
+    </body>
+    </html>
+{% endblock %}

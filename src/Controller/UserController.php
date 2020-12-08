@@ -42,10 +42,11 @@ class UserController extends ApiController
      */
     public function getUsersList()
     {
+        return new UserResponse($this->userRepository->findAll());
+        /*
         $response = new JsonResponse();
         $user = $this->getUser();
         if ($user->getRole() == 'ADMIN') {
-            return new UserResponse($this->userRepository->findAll());
         }
         $response->setData(
             [
@@ -54,7 +55,7 @@ class UserController extends ApiController
             ]
         );
         $response->setStatusCode(403);
-        return $response;
+        return $response; */
     }
 
     /**
@@ -67,8 +68,9 @@ class UserController extends ApiController
     {
         $response = new JsonResponse();
         $user = $this->userRepository->findOneBy(['id' => $userId]);
+        $userAuth = $this->getUser()->getId();
 
-        if (!empty($user)) {
+        if (!empty($user)&&(($userId == $userAuth)||$user->getRole() == 'ADMIN')) {
 
             $response->setData(
                 [
@@ -79,8 +81,8 @@ class UserController extends ApiController
             );
             $response->setStatusCode(200);
 
-        } else {
-
+        }
+        elseif (empty($user)){
             $response->setData(
                 [
                     'status' => '404',
@@ -88,6 +90,16 @@ class UserController extends ApiController
                 ]
             );
             $response->setStatusCode(404);
+        }
+        else {
+
+            $response->setData(
+                [
+                    'status' => '403',
+                    'errors' => 'Access denied',
+                ]
+            );
+            $response->setStatusCode(403);
         }
         return $response;
     }
@@ -209,6 +221,29 @@ class UserController extends ApiController
             ];
             return $this->response($data, 422);
         }
+    }
+
+    /**
+     * @Route("/activeUser", name="get-active-user", methods={"GET"})
+     * @return JsonResponse
+     */
+    public function getActiveUser()
+    {
+        $response = new JsonResponse();
+        if ($this->getUser() == null) {
+            $response->setData(['message' => 'Unauthorized']);
+            $response->setStatusCode(401);
+            return $response;
+        }
+        $response->setData(
+            [
+                'id' => $this->getUser()->getId(),
+                'email' => $this->getUser()->getEmail(),
+                'role' => $this->getUser()->getRole(),
+            ]
+        );
+        $response->setStatusCode(200);
+        return $response;
     }
 
     /**
