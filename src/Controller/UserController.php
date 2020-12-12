@@ -202,9 +202,7 @@ class UserController extends ApiController
                     $user,
                     $request->get('password')
                 ));
-            $user->setRole(
-                $request->get('role')
-            );
+            $user->setRole("USER");
             $entityManager->persist($user);
             $entityManager->flush();
 

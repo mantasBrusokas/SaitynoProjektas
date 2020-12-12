@@ -31,7 +31,6 @@
             if (token == null) {
                 logout();
                 $('#logout').attr("style", "display:none");
-                $('.addNewPost').attr("style", "display:none");
             } else {
                 $('#loginButton').attr("style", "display:none");
                 $('#register').attr("style", "display:none");
@@ -39,16 +38,8 @@
                 $('#logout').attr("style", "-webkit-text-stroke: 1px black; font-size:20px;font-weight: bold;");
                 getActiveUser();
                 getProducts();
-                checkPermissionUsers();
             }
         });
-        function checkPermissionUsers() {
-            if (sessionStorage.getItem("userRole") == 'CLIENT') {
-                $('.addNewPost').removeAttr("style");
-            } else {
-                $('.addNewPost').attr("style", "display:none");
-            }
-        }
         function getActiveUser() {
             var ajaxSendRequest = $.ajax({
                 url: 'api/activeUser',
@@ -99,8 +90,6 @@
             if ($('#email-register').val() == ""
                 ||
                 $('#password-register').val() == ""
-                ||
-                $('#role-register').val() == ""
             ) {
                 $('.bad-register').removeAttr("style");
                 $('.bad-register').attr("style", "color:red");
@@ -109,7 +98,6 @@
             var info = {
                 "email": $('#email-register').val(),
                 "password": $('#password-register').val(),
-                "role": $('#role-register').val(),
             }
             var ajaxSendRequest = $.ajax({
                 url: '{{ path('register') }}',
@@ -142,9 +130,9 @@
                 async: false,
             });
             ajaxSendRequest.done(function (data) {
-                var posts = "";
+                var products = "";
                 for (x in data) {
-                    posts += "<div class=\"col-lg-4 col-md-7 col-sm-9\">\n" +
+                    products += "<div class=\"col-lg-4 col-md-7 col-sm-9\">\n" +
                         "                    <div class=\"pricing-style-one mt-40 wow fadeIn\" data-wow-duration=\"1.5s\" data-wow-delay=\"0.2s\">\n" +
                         "                        <div class=\"pricing-icon text-center\">\n" +
                         "                            <img src=\"assets/images/ShopItem.svg\" alt=\"\">\n" +
@@ -155,25 +143,25 @@
                         "                            <p><span class=\"price\">" + data[x].price + "</span>&euro;</p>\n" +
                         "                        </div>\n";
                     if (sessionStorage.getItem("userRole") == "ADMIN") {
-                        posts += "                        <div class=\"pricing-header text-center\">\n" +
+                        products += "                        <div class=\"pricing-header text-center\">\n" +
                             " <ul class=\"carousel-btn rounded-buttons\">\n" +
                             "                                                <li ><a class=\"main-btn rounded-three register-to-visit\"\n" +
                             "                                                       style=\"background: -webkit-linear-gradient(left, blue 0%, cornflowerblue 100%);\" onclick=getProduct('" + data[x].id + "') data-toggle=\"modal\" data-target=\"#editForm\"\n" +
                             "                                                       href=\"\">Redaguoti</a></li>\n" +
                             "                                            </ul> </div>";
-                        posts += "               <div class=\"pricing-header text-center\" style=\"padding-top: 10px \">\n" +
+                        products += "               <div class=\"pricing-header text-center\" style=\"padding-top: 10px \">\n" +
                             " <ul class=\"carousel-btn rounded-buttons\">\n" +
                             "                                                <li ><a class=\"main-btn rounded-three register-to-visit\"\n" +
                             "                                                       style=\"background: -webkit-linear-gradient(left, #ea0606 0%, #e70909 100%);\" onclick=deleteProduct('" + data[x].id + "') \n" +
                             "                                                       href=\"\">Naikinti</a></li>\n" +
                             "                                            </ul>";
                     }
-                    posts += "                      </div>\n" +
+                    products += "                      </div>\n" +
                         "                    </div>" +
                         "                </div>";
                 }
                 if (sessionStorage.getItem("userRole") == "ADMIN") {
-                    posts += "<div class=\"col-lg-4 col-md-7 col-sm-9\">\n" +
+                    products += "<div class=\"col-lg-4 col-md-7 col-sm-9\">\n" +
                         "                    <div class=\"pricing-style-one mt-40 wow fadeIn\" data-wow-duration=\"1.5s\" data-wow-delay=\"0.2s\">\n" +
                         "                        <div class=\"pricing-icon text-center\">\n" +
                         "                            <img src=\"assets/images/ShopItem.svg\" alt=\"\">\n" +
@@ -187,7 +175,7 @@
                         "                    </div>" +
                         "                </div>";
                 }
-                $('.posts-information').html(posts);
+                $('.posts-information').html(products);
             }).fail(function (textStatus, errorThrown) {
                 checkToken(textStatus.responseJSON);
             });
@@ -223,7 +211,6 @@
                 $('#logout').attr("style", "-webkit-text-stroke: 1px black; font-size:20px;font-weight: bold;");
                 getActiveUser();
                 getProducts();
-                checkPermissionUsers();
             }).fail(function (textStatus, errorThrown) {
                 $('.bad-login').removeAttr("style");
                 $('.bad-login').attr("style", "color:red");
@@ -236,7 +223,6 @@
             $('#loginButton').removeAttr("style");
             $('#register').removeAttr("style");
             $('#logout').attr("style", "display:none");
-            $('.addNewPost').attr("style", "display:none");
         }
         var tempproductId = 0;
         function editProduct() {
@@ -445,11 +431,6 @@
                         <label data-error="wrong" data-success="right" for="defaultForm-pass">Slaptažodis</label>
                         <input type="password" id="password-register" autocomplete="off" class="form-control ">
                     </div>
-                    <div class="md-form mb-4">
-                        <label data-error="wrong" data-success="right" for="defaultForm-pass">Rolė</label>
-                        <input type="text" id="role-register" autocomplete="off" class="form-control ">
-                    </div>
-
                     <div class="bad-register error-info" style="display: none; color: #ff0000">
                         Neteisingi registracijos duomenys!!!
                     </div>
@@ -533,7 +514,7 @@
                                     <li class="nav-item">
                                         <a class="page-scroll"
                                            style="-webkit-text-stroke: 1px black; font-size:20px;font-weight: bold;"
-                                           href="#post">Dviračių nuoma</a>
+                                           href="#product">Dviračių nuoma</a>
                                     </li>
                                     <li class="nav-item">
                                         <a class="page-scroll"
@@ -579,14 +560,6 @@
                                     <div class="row justify-content-center">
                                         <div class="col-xl-6 col-lg-7 col-sm-10">
                                             <h2 class="carousel-title">Pats patogiausias dviračių nuomos portalas</h2>
-                                            <ul class="carousel-btn rounded-buttons">
-                                                <li class="addNewPost"><a
-                                                            class="main-btn rounded-three register-to-visit"
-                                                            style="background: cornflowerblue;"
-                                                            data-toggle="modal" data-target="#modalProductForm"
-                                                            onclick="removeJustError()"
-                                                            href="">Pridėti naują dviratį</a></li>
-                                            </ul>
                                         </div>
                                     </div> <!-- row -->
                                 </div> <!-- container -->
@@ -599,14 +572,6 @@
                                     <div class="row justify-content-center">
                                         <div class="col-xl-6 col-lg-7 col-sm-10">
                                             <h2 class="carousel-title">Rezervuok ir važiuok</h2>
-                                            <ul class="carousel-btn rounded-buttons">
-                                                <li class="addNewPost"><a
-                                                            class="main-btn rounded-three register-to-visit"
-                                                            style="background: cornflowerblue;"
-                                                            data-toggle="modal" data-target="#modalProductForm"
-                                                            onclick="removeJustError()"
-                                                            href="">Pridėti naują dviratį</a></li>
-                                            </ul>
                                         </div>
                                     </div> <!-- row -->
                                 </div> <!-- container -->
@@ -627,7 +592,7 @@
     <!--====== NAVBAR PART ENDS ======-->
 
     <!--====== ABOUT PART START ======-->
-    <section id="post" class="about-area">
+    <section id="product" class="about-area">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-xl-6 col-lg-8">
