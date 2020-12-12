@@ -48,6 +48,7 @@ class ProductController extends AbstractController
                     'id' => $product->getId(),
                     'name' => $product->getName(),
                     'description' => $product->getDescription(),
+                    'price' => $product->getPrice(),
                 ]
             );
             $response->setStatusCode(200);
@@ -68,6 +69,86 @@ class ProductController extends AbstractController
     {
         return new ProductResponse($this->productRespository->findAll());
     }
+
+    /**
+     * @param ProductRepository $productRepository
+     * @param EntityManagerInterface $entityManager
+     * @param $productId
+     * @return JsonResponse
+     * @Route("/products/{productId}", name="products_delete_one", methods={"DELETE"})
+     */
+    public function deleteProductDirectly(EntityManagerInterface $entityManager,
+                                       ProductRepository $productRepository, int $productId)
+    {
+        $product = $productRepository->find($productId);
+
+        if (!$product) {
+            $data = [
+                'status' => 404,
+                'errors' => "Product not found",
+            ];
+            return $this->response($data, 404);
+        }
+
+        $entityManager->remove($product);
+        $entityManager->flush();
+        $data = [
+            'status' => 200,
+            'errors' => "Product deleted successfully",
+        ];
+        return $this->response($data);
+    }
+
+    /**
+     * @param Request $request
+     * @param EntityManagerInterface $entityManager
+     * @param ProductRepository $productRepository
+     * @param $productId
+     * @return JsonResponse
+     * @Route("/products/{productId}", name="products_put_one", methods={"PUT"})
+     */
+    public function updateProductAdmin(Request $request, EntityManagerInterface $entityManager,
+                                       ProductRepository $productRepository, $productId)
+    {
+        try {
+            $product = $productRepository->find($productId);
+
+            if (!$product) {
+                $data = [
+                    'status' => 404,
+                    'errors' => "Product not found",
+                ];
+                return $this->response($data, 404);
+            }
+
+            $request = $this->transformJsonBody($request);
+
+            if (!$request || !$request->get('name') || !$request->request->get('description')) {
+                throw new \Exception();
+            }
+
+            $product->setName($request->get('name'));
+            $product->setDescription($request->get('description'));
+            $product->setPrice($request->get('price'));
+            $product->setCreateDate(new \DateTime($request->get('create_date')));
+            $entityManager->persist($product);
+            $entityManager->flush();
+
+            $data = [
+                'status' => 200,
+                'errors' => "Product updated successfully",
+            ];
+            return $this->response($data);
+
+        } catch (\Exception $e) {
+            $data = [
+                'status' => 422,
+                'errors' => "Data no valid",
+            ];
+            return $this->response($data, 422);
+        }
+    }
+
 
     /**
      * @param int $userId

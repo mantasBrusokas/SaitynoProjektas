@@ -41,6 +41,7 @@ class ProductResponse extends JsonResponse
                     'id' => $product->getId(),
                     'name' => $product->getName(),
                     'description' => $product->getDescription(),
+                    'price' => $product->getPrice(),
                 ];
         }
         return $data;

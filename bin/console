@@ -1,4 +1,4 @@
-#!/usr/bin/env php
+com#!/usr/bin/env php
 <?php
 
 use App\Kernel;

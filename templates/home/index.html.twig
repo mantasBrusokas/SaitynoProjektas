@@ -27,7 +27,7 @@
         var token = null;
         $(document).ready(function () {
             token = sessionStorage.getItem("token");
-            getPosts();
+            getProducts();
             if (token == null) {
                 logout();
                 $('#logout').attr("style", "display:none");
@@ -36,9 +36,9 @@
                 $('#loginButton').attr("style", "display:none");
                 $('#register').attr("style", "display:none");
                 $('#logout').removeAttr("style");
-                $('#logout').attr("style", "-webkit-text-stroke: 1px #63037d; font-size:20px;font-weight: bold;");
+                $('#logout').attr("style", "-webkit-text-stroke: 1px black; font-size:20px;font-weight: bold;");
                 getActiveUser();
-                getPosts();
+                getProducts();
                 checkPermissionUsers();
             }
         });
@@ -67,13 +67,14 @@
                 checkToken(textStatus.responseJSON);
             });
         }
-        function addPost() {
+        function addProduct() {
             var info = {
-                "name": $('#PostName').val(),
-                "description": $('#PostDescription').val(),
+                "name": $('#ProductName').val(),
+                "description": $('#ProductDescription').val(),
+                "price": $('#ProductPrice').val(),
             }
             var ajaxSendRequest = $.ajax({
-                url: window.location.href + 'api/users/' + sessionStorage.getItem("userId") + '/posts',
+                url: window.location.href + 'api/users/' + sessionStorage.getItem("userId") + '/products',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + token
@@ -84,9 +85,9 @@
                 async: false,
             });
             ajaxSendRequest.done(function (data) {
-                $('#modalPostForm').modal('hide');
+                $('#modalProductForm').modal('hide');
                 $(".modal-backdrop").remove();
-                getPosts();
+                getProducts();
                 alert('Sėkmingai įdėjote skelbimą');
             }).fail(function (textStatus, errorThrown) {
                 checkToken(textStatus.responseJSON);
@@ -130,7 +131,7 @@
                 $('.bad-login').attr("style", "color:red");
             });
         }
-        function getPosts() {
+        function getProducts() {
             var ajaxSendRequest = $.ajax({
                 url: '{{ path('get_products') }}',
                 headers: {
@@ -149,20 +150,21 @@
                         "                            <img src=\"assets/images/ShopItem.svg\" alt=\"\">\n" +
                         "                        </div>\n" +
                         "                        <div class=\"pricing-header text-center\">\n" +
-                        "                            <h5 class=\"sub-title\">" + data[x].name + "</h5>\n" +
-                        "                            <p class=\"month\"><span class=\"price\">" + data[x].description + "</span></p>\n" +
+                        "                            <h3>" + data[x].name + "</h3>\n" +
+                        "                            <p><span class=\"description\">" + data[x].description + "</span></p>\n" +
+                        "                            <p><span class=\"price\">" + data[x].price + "</span>&euro;</p>\n" +
                         "                        </div>\n";
                     if (sessionStorage.getItem("userRole") == "ADMIN") {
                         posts += "                        <div class=\"pricing-header text-center\">\n" +
                             " <ul class=\"carousel-btn rounded-buttons\">\n" +
                             "                                                <li ><a class=\"main-btn rounded-three register-to-visit\"\n" +
-                            "                                                       style=\"background: -webkit-linear-gradient(left, #63037d 0%, #e638f9 100%);\" onclick=getPost('" + data[x].id + "') data-toggle=\"modal\" data-target=\"#modalServiceForm\"\n" +
+                            "                                                       style=\"background: -webkit-linear-gradient(left, blue 0%, cornflowerblue 100%);\" onclick=getProduct('" + data[x].id + "') data-toggle=\"modal\" data-target=\"#editForm\"\n" +
                             "                                                       href=\"\">Redaguoti</a></li>\n" +
                             "                                            </ul> </div>";
                         posts += "               <div class=\"pricing-header text-center\" style=\"padding-top: 10px \">\n" +
                             " <ul class=\"carousel-btn rounded-buttons\">\n" +
                             "                                                <li ><a class=\"main-btn rounded-three register-to-visit\"\n" +
-                            "                                                       style=\"background: -webkit-linear-gradient(left, #ea0606 0%, #e70909 100%);\" onclick=deletePost('" + data[x].id + "') \n" +
+                            "                                                       style=\"background: -webkit-linear-gradient(left, #ea0606 0%, #e70909 100%);\" onclick=deleteProduct('" + data[x].id + "') \n" +
                             "                                                       href=\"\">Naikinti</a></li>\n" +
                             "                                            </ul>";
                     }
@@ -177,16 +179,11 @@
                         "                            <img src=\"assets/images/ShopItem.svg\" alt=\"\">\n" +
                         "                        </div>\n" +
                         "                        <div class=\"pricing-header text-center\">\n" +
-                        "                            <h5 class=\"sub-title\">Prekės pavadinimas</h5>\n" +
-                        "                            <p class=\"month\"><span class=\"price\">Aprašymas</span></p>\n" +
-                        "                        </div>\n" +
-                        "                        <div class=\"pricing-header text-center\">\n" +
                         " <ul class=\"carousel-btn rounded-buttons\">\n" +
                         "                                                <li ><a class=\"main-btn rounded-three register-to-visit\"\n" +
-                        "                                                       style=\"background: -webkit-linear-gradient(left, #63037d 0%, #e638f9 100%);\" data-toggle=\"modal\" onclick='removeError()' data-target=\"#modalPostForm\"\n" +
-                        "                                                       href=\"\">Pridėti naują</a></li>\n" +
+                        "                                                       style=\"background: -webkit-linear-gradient(left, blue 0%, cornflowerblue 100%);\" data-toggle=\"modal\" onclick='removeError()' data-target=\"#modalProductForm\"\n" +
+                        "                                                       href=\"\">Pridėti naują dviratį</a></li>\n" +
                         "                                            </ul>" +
-                        "                      </div>\n" +
                         "                    </div>" +
                         "                </div>";
                 }
@@ -223,9 +220,9 @@
                 $('#loginButton').attr("style", "display:none");
                 $('#register').attr("style", "display:none");
                 $('#logout').removeAttr("style");
-                $('#logout').attr("style", "-webkit-text-stroke: 1px #63037d; font-size:20px;font-weight: bold;");
+                $('#logout').attr("style", "-webkit-text-stroke: 1px black; font-size:20px;font-weight: bold;");
                 getActiveUser();
-                getPosts();
+                getProducts();
                 checkPermissionUsers();
             }).fail(function (textStatus, errorThrown) {
                 $('.bad-login').removeAttr("style");
@@ -241,19 +238,20 @@
             $('#logout').attr("style", "display:none");
             $('.addNewPost').attr("style", "display:none");
         }
-        var tempPostId = 0;
-        function editPost() {
-            if ($('#service-edit-title').val() == "" || $('#service-edit-price').val() == "") {
+        var tempproductId = 0;
+        function editProduct() {
+            if ($('#edit-title').val() == "" || $('#edit-price').val() == "") {
                 $('.bad-service-data-edit').removeAttr("style");
                 $('.bad-service-data-edit').attr("style", "color:red");
                 return;
             }
             var info = {
-                "name": $('#service-edit-title').val(),
-                "description": $('#service-edit-price').val()
+                "name": $('#edit-title').val(),
+                "price": $('#edit-price').val(),
+                "description": $('#edit-description').val(),
             }
             var ajaxSendRequest = $.ajax({
-                url: window.location.href + 'api/posts/' + tempPostId,
+                url: window.location.href + 'api/products/' + tempproductId,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + token
@@ -264,19 +262,21 @@
                 async: false,
             });
             ajaxSendRequest.done(function (data) {
-                getPosts();
-                $('#modalServiceForm').modal('hide');
+                getProducts();
+                $('#editForm').modal('hide');
                 $(".modal-backdrop").remove();
                 $('.bad-service-data-edit').removeAttr("style");
             }).fail(function (textStatus, errorThrown) {
                 checkToken(textStatus.responseJSON);
+                $('.bad-data-edit').removeAttr("style");
+                $('.bad-data-edit ').attr("style", "color:red");
             });
         }
-        function getPost(postId) {
+        function getProduct(productId) {
             removeError();
-            tempPostId = postId;
+            tempproductId = productId;
             var ajaxSendRequest = $.ajax({
-                url: window.location.href + 'api/posts/' + postId,
+                url: window.location.href + 'api/products/' + productId,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + token
@@ -286,16 +286,17 @@
                 async: false,
             });
             ajaxSendRequest.done(function (data) {
-                $('#service-edit-title').val(data.name);
-                $('#service-edit-price').val(data.description);
+                $('#edit-title').val(data.name);
+                $('#edit-price').val(data.price);
+                $('#edit-description').val(data.description);
             }).fail(function (textStatus, errorThrown) {
                 checkToken(textStatus.responseJSON);
             });
         }
-        function deletePost(postId) {
+        function deleteProduct(productId) {
             removeError();
             var ajaxSendRequest = $.ajax({
-                url: window.location.href + 'api/posts/' + postId,
+                url: window.location.href + 'api/products/' + productId,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + token
@@ -305,7 +306,7 @@
                 async: false,
             });
             ajaxSendRequest.done(function (data) {
-                alert("Skelbimas buvo ištrintas");
+                alert("Dviratis buvo pašalintas");
             }).fail(function (textStatus, errorThrown) {
                 checkToken(textStatus.responseJSON);
             });
@@ -347,12 +348,12 @@
 
     <body>
 
-    <div class="modal fade" id="modalServiceForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+    <div class="modal fade" id="editForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
          aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header text-center">
-                    <h4 class="modal-title w-100 font-weight-bold">Redaguoti skelbimą</h4>
+                    <h4 class="modal-title w-100 font-weight-bold">Redaguoti dviračio informaciją</h4>
                     <button type="button" id="login-modal-close" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -360,34 +361,38 @@
 
                 <div class="modal-body mx-3">
                     <div class="md-form mb-1">
-                        <label data-error="wrong" data-success="right" for="defaultForm-email">Skelbimo
-                            pavadinimas</label>
+                        <label data-error="wrong" data-success="right" for="defaultForm-email">Dviračio pavadinimas</label>
                         <br>
-                        <input type="text" id="service-edit-title" class="form-control ">
+                        <input type="text" id="edit-title" class="form-control ">
                     </div>
                     <div class="md-form mb-4">
                         <label data-error="wrong" data-success="right" for="defaultForm-pass">Aprašymas</label>
                         <br>
-                        <input type="text" id="service-edit-price" class="form-control ">
+                        <input type="text" id="edit-description" class="form-control ">
                     </div>
-                    <div class="bad-service-data-edit error-info" style="display: none; color: red">
-                        Neužpildėte visų duomenų!!!
+                    <div class="md-form mb-4">
+                        <label data-error="wrong" data-success="right" for="defaultForm-pass">Kaina</label>
+                        <br>
+                        <input type="text" id="edit-price" class="form-control ">
+                    </div>
+                    <div class="bad-data-edit error-info" style="display: none; color: red">
+                        Neteisingai užpildėte duomenis!
                     </div>
                 </div>
                 <div class="modal-footer d-flex justify-content-center">
-                    <button class="btn btn-success" onclick="editPost()">Išsaugoti</button>
+                    <button class="btn btn-success" onclick="editProduct()">Išsaugoti</button>
                 </div>
             </div>
         </div>
     </div>
 
 
-    <div class="modal fade" id="modalPostForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+    <div class="modal fade" id="modalProductForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
          aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header text-center">
-                    <h4 class="modal-title w-100 font-weight-bold">Įdėti skelbimą</h4>
+                    <h4 class="modal-title w-100 font-weight-bold">Pridėti dviratį</h4>
                     <button type="button" id="login-modal-close" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -397,19 +402,24 @@
                     <div class="md-form mb-1">
                         <label data-error="wrong" data-success="right" for="defaultForm-email">Pavadinimas</label>
                         <br>
-                        <input type="text" id="PostName" autocomplete="off" class="form-control ">
+                        <input type="text" id="ProductName" autocomplete="off" class="form-control ">
                     </div>
                     <div class="md-form mb-4">
                         <label data-error="wrong" data-success="right" for="defaultForm-pass">Aprašymas</label>
                         <br>
-                        <input type="text" id="PostDescription" autocomplete="off" class="form-control ">
+                        <input type="text" id="ProductDescription" autocomplete="off" class="form-control ">
+                    </div>
+                    <div class="md-form mb-4">
+                        <label data-error="wrong" data-success="right" for="defaultForm-pass">Kaina</label>
+                        <br>
+                        <input type="text" id="ProductPrice" autocomplete="off" class="form-control ">
                     </div>
                     <div class="bad-new-post error-info" style="display: none; color: red">
-                        Neužpildėte visų duomenų!!!
+                        Neteisingai užpildyta forma!
                     </div>
                 </div>
                 <div class="modal-footer d-flex justify-content-center">
-                    <button class="btn btn-success" onclick="addPost()">Įdėti skelbimą</button>
+                    <button class="btn btn-success" onclick="addProduct()">Pridėti dviratį</button>
                 </div>
             </div>
         </div>
@@ -428,20 +438,20 @@
 
                 <div class="modal-body mx-3">
                     <div class="md-form mb-1">
-                        <input type="email" id="email-register" autocomplete="off" class="form-control ">
                         <label data-error="wrong" data-success="right" for="defaultForm-email">El. paštas</label>
+                        <input type="email" id="email-register" autocomplete="off" class="form-control ">
                     </div>
                     <div class="md-form mb-4">
-                        <input type="password" id="password-register" autocomplete="off" class="form-control ">
                         <label data-error="wrong" data-success="right" for="defaultForm-pass">Slaptažodis</label>
+                        <input type="password" id="password-register" autocomplete="off" class="form-control ">
                     </div>
                     <div class="md-form mb-4">
-                        <input type="text" id="role-register" autocomplete="off" class="form-control ">
                         <label data-error="wrong" data-success="right" for="defaultForm-pass">Rolė</label>
+                        <input type="text" id="role-register" autocomplete="off" class="form-control ">
                     </div>
 
                     <div class="bad-register error-info" style="display: none; color: #ff0000">
-                        Blogi registracijos duomenys!!!
+                        Neteisingi registracijos duomenys!!!
                     </div>
                 </div>
                 <div class="modal-footer d-flex justify-content-center">
@@ -463,15 +473,15 @@
                 </div>
                 <div class="modal-body mx-3">
                     <div class="md-form mb-1">
-                        <input type="text" id="email" class="form-control ">
                         <label data-error="wrong" data-success="right" for="defaultForm-email">El. paštas</label>
+                        <input type="text" id="email" class="form-control ">
                     </div>
                     <div class="md-form mb-4">
-                        <input type="password" id="password" class="form-control ">
                         <label data-error="wrong" data-success="right" for="defaultForm-pass">Slaptažodis</label>
+                        <input type="password" id="password" class="form-control ">
                     </div>
                     <div class="bad-login error-info" style="display: none; color: red">
-                        Blogi prisijungimo duomenys!!!
+                        Neteisingi prisijungimo duomenys!
                     </div>
                 </div>
                 <div class="modal-footer d-flex justify-content-center">
@@ -486,7 +496,7 @@
         <div class="loader">
             <div class="ytp-spinner">
                 <div class="ytp-spinner-container"
-                     style="background: -webkit-linear-gradient(right, black 100%, white 100%);">
+                     style="background: -webkit-linear-gradient(left, blue 0%, cornflowerblue 100%);">
                 </div>
             </div>
         </div>
@@ -496,13 +506,13 @@
     <!--====== NAVBAR PART START ======-->
 
     <section class="header-area">
-        <div class="navbar-area" style="background: -webkit-linear-gradient(left, #d4b52e 0%, #d417b8 100%);">
+        <div class="navbar-area" style="background: -webkit-linear-gradient(left, dodgerblue 0%, cornflowerblue 50%);">
             <div class="container">
                 <div class="row">
                     <div class="col-lg-12">
                         <nav class="navbar navbar-expand-lg">
                             <a class="navbar-brand" href="#">
-                                <img src="assets/images/BikeShopLogo.png" alt="Logo">
+                                <img src="assets/images/BikeShopLogo.png" alt="Logo" height="70" width="70">
                             </a>
                             <button class="navbar-toggler" type="button"
                                     data-target="#navbarEight" aria-controls="navbarEight" aria-expanded="false"
@@ -513,36 +523,36 @@
                                 <span class="toggler-icon"></span>
                             </button>
 
-                            <div class="collapse navbar-collapse sub-menu-bar" id="navbarEight">
-                                <ul class="navbar-nav ml-auto">
+                            <div class="collapse navbar-collapse sub-menu-bar" id="navbarEight" style="background: -webkit-linear-gradient(left, dodgerblue 0%, cornflowerblue 50%)">
+                                <ul class="navbar-nav mr-auto">
                                     <li class="nav-item">
                                         <a class="page-scroll"
-                                           style="-webkit-text-stroke: 1px #63037d; font-size:20px;font-weight: bold;"
+                                           style="-webkit-text-stroke: 1px black; font-size:20px;font-weight: bold;"
                                            href="#home">Pagrindinis</a>
                                     </li>
                                     <li class="nav-item">
                                         <a class="page-scroll"
-                                           style="-webkit-text-stroke: 1px #63037d; font-size:20px;font-weight: bold;"
+                                           style="-webkit-text-stroke: 1px black; font-size:20px;font-weight: bold;"
                                            href="#post">Dviračių nuoma</a>
                                     </li>
                                     <li class="nav-item">
                                         <a class="page-scroll"
-                                           style="-webkit-text-stroke: 1px #63037d; font-size:20px;font-weight: bold;"
+                                           style="-webkit-text-stroke: 1px black; font-size:20px;font-weight: bold;"
                                            href="#about">Kontaktai</a>
                                     </li>
                                     <li class="nav-item" id="loginButton">
                                         <a href="" data-toggle="modal"
-                                           style="-webkit-text-stroke: 1px #63037d; font-size:20px;font-weight: bold;"
+                                           style="-webkit-text-stroke: 1px black; font-size:20px;font-weight: bold;"
                                            onclick="removeError()" data-target="#modalLoginForm">Prisijungti</a>
                                     </li>
                                     <li class="nav-item">
                                         <a class="page-scroll" id="logout"
-                                           style="-webkit-text-stroke: 1px #63037d; font-size:20px;font-weight: bold;"
+                                           style="-webkit-text-stroke: 1px black; font-size:20px;font-weight: bold;"
                                            onclick="logout()" href="">Atsijungti</a>
                                     </li>
                                     <li class="nav-item" id="register">
                                         <a href="" data-toggle="modal"
-                                           style="-webkit-text-stroke: 1px #63037d; font-size:20px;font-weight: bold;"
+                                           style="-webkit-text-stroke: 1px black; font-size:20px;font-weight: bold;"
                                            onclick="removeError()" data-target="#modalRegisterForm">Registruotis</a>
                                     </li>
                                 </ul>
@@ -568,14 +578,14 @@
                                 <div class="container">
                                     <div class="row justify-content-center">
                                         <div class="col-xl-6 col-lg-7 col-sm-10">
-                                            <h2 class="carousel-title">Greičiausias skelbimų portalas</h2>
+                                            <h2 class="carousel-title">Pats patogiausias dviračių nuomos portalas</h2>
                                             <ul class="carousel-btn rounded-buttons">
                                                 <li class="addNewPost"><a
                                                             class="main-btn rounded-three register-to-visit"
-                                                            style="background: -webkit-linear-gradient(left, #63037d 0%, #e638f9 100%);"
-                                                            data-toggle="modal" data-target="#modalPostForm"
+                                                            style="background: cornflowerblue;"
+                                                            data-toggle="modal" data-target="#modalProductForm"
                                                             onclick="removeJustError()"
-                                                            href="">Įdėti skelbimą dabar</a></li>
+                                                            href="">Pridėti naują dviratį</a></li>
                                             </ul>
                                         </div>
                                     </div> <!-- row -->
@@ -583,19 +593,19 @@
                             </div> <!-- carousel caption -->
                         </div> <!-- carousel-item -->
 
-                        <div class="carousel-item bg_cover" style="background-image: url(assets/images/Slider_2.jpg)">
+                        <div class="carousel-item bg_cover" style="background-image: url(assets/images/Rent.jpg)">
                             <div class="carousel-caption">
                                 <div class="container">
                                     <div class="row justify-content-center">
                                         <div class="col-xl-6 col-lg-7 col-sm-10">
-                                            <h2 class="carousel-title">Nestovėk eilėse</h2>
+                                            <h2 class="carousel-title">Rezervuok ir važiuok</h2>
                                             <ul class="carousel-btn rounded-buttons">
                                                 <li class="addNewPost"><a
                                                             class="main-btn rounded-three register-to-visit"
-                                                            style="background: -webkit-linear-gradient(left, #63037d 0%, #e638f9 100%);"
-                                                            data-toggle="modal" data-target="#modalPostForm"
+                                                            style="background: cornflowerblue;"
+                                                            data-toggle="modal" data-target="#modalProductForm"
                                                             onclick="removeJustError()"
-                                                            href="">Įdėti skelbimą dabar</a></li>
+                                                            href="">Pridėti naują dviratį</a></li>
                                             </ul>
                                         </div>
                                     </div> <!-- row -->
@@ -622,9 +632,7 @@
             <div class="row justify-content-center">
                 <div class="col-xl-6 col-lg-8">
                     <div class="section-title text-center mt-30 pb-40">
-                        <h4 class="title wow fadeInUp" data-wow-duration="1.5s" data-wow-delay="0.6s">Skelbimai</h4>
-                        <p class="text wow fadeInUp" data-wow-duration="1.5s" data-wow-delay="1s">Patys naujausi
-                            skelbimai kiekvieną dieną</p>
+                        <h4 class="title wow fadeInUp" data-wow-duration="1.5s" data-wow-delay="0.6s">Dviračiai kuriuos galime pasiūlyti</h4>
                     </div> <!-- section title -->
                 </div>
             </div> <!-- row -->
@@ -639,11 +647,13 @@
             <div class="row justify-content-center">
                 <div class="col-xl-6 col-lg-8">
                     <div class="section-title text-center mt-30 pb-40">
-                        <h4 class="title wow fadeInUp" data-wow-duration="1.5s" data-wow-delay="0.6s">Kontaktai</h4>
-                        <p class="text wow fadeInUp" data-wow-duration="1.5s" data-wow-delay="1s">Mus galite rasti
-                            adresu: Naujoji gatvė 10</p>
-                        <p class="text wow fadeInUp" data-wow-duration="1.5s" data-wow-delay="1s">Telefonas:
-                            +3707777777777</p>
+                        <h4 class="title wow fadeInUp" data-wow-duration="0.6s" data-wow-delay="0.1s">Kontaktai</h4>
+                        <p class="text wow fadeInUp" data-wow-duration="0.6s" data-wow-delay="0.1s">Mus galite rasti Kaune
+                            adresu: Nuomininkų gatvė 5, Kaunas</p>
+                        <p class="text wow fadeInUp" data-wow-duration="0.6s" data-wow-delay="0.1s">Telefonas pasiteirauti:
+                            +3706255555</p>
+                        <p class="text wow fadeInUp" data-wow-duration="0.6s" data-wow-delay="0.1s">Taip pat galite susisiekti el. paštu:
+                            dviraciu.nuoma@gmail.com</p>
                     </div> <!-- section title -->
                 </div>
             </div> <!-- row -->
